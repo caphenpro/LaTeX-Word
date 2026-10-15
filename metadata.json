@@ -1,0 +1,6 @@
+{
+  "name": "LaTeX to Word Converter - Chuyển LaTeX sang Word Công Thức Toán",
+  "description": "Ứng dụng chuyển đổi mã LaTeX sang Microsoft Word (.docx) với công thức toán học chuẩn OMML/Office Math sắc nét và có thể chỉnh sửa trực tiếp trong Word.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
