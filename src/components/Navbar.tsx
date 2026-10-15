@@ -6,6 +6,7 @@ import {
   FileDown,
   Layers,
   ChevronDown,
+  Compass,
 } from 'lucide-react';
 import { TEMPLATES, TemplateItem } from '../data/templates';
 
@@ -17,6 +18,7 @@ interface NavbarProps {
   onOpenGuide: () => void;
   isDownloading: boolean;
   equationCount: number;
+  geometryCount: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -27,6 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenGuide,
   isDownloading,
   equationCount,
+  geometryCount,
 }) => {
   const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false);
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
@@ -36,7 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
         {/* Brand */}
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-bold text-sm tracking-tight border border-indigo-400/30">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-bold text-sm tracking-tight border border-indigo-400/30">
             <span className="font-serif italic text-base">TeX</span>
           </div>
           <div>
@@ -44,12 +47,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-1.5">
                 LaTeX <span className="text-indigo-400 font-normal">sang</span> Word
               </h1>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                OMML Chuẩn
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <Compass className="w-3 h-3" /> OMML & Hình Học
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden sm:block">
-              Định dạng công thức toán học Microsoft Word chính xác & chỉnh sửa trực tiếp
+              Hỗ trợ công thức toán học OMML, vectơ, góc & chèn hình vẽ TikZ vào Word
             </p>
           </div>
         </div>
@@ -76,9 +79,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="fixed inset-0 z-30"
                   onClick={() => setTemplateDropdownOpen(false)}
                 />
-                <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-72 rounded-xl bg-slate-900 border border-slate-750 shadow-2xl py-1.5 z-40 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                    Chọn mẫu có sẵn
+                <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-80 rounded-xl bg-slate-900 border border-slate-750 shadow-2xl py-1.5 z-40 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800 flex items-center justify-between">
+                    <span>Chọn mẫu văn bản</span>
+                    <span className="text-emerald-400 text-[10px] font-normal">Có mẫu Hình học</span>
                   </div>
                   {TEMPLATES.map(tpl => (
                     <button
@@ -89,8 +93,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-indigo-600/20 flex flex-col transition-colors border-b border-slate-800/50 last:border-none"
                     >
-                      <span className="font-semibold text-white">{tpl.name}</span>
-                      <span className="text-[11px] text-slate-400 line-clamp-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-white">{tpl.name}</span>
+                        {tpl.category === 'geometry' && (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-500/20 text-emerald-400">
+                            Hình học
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
                         {tpl.description}
                       </span>
                     </button>
@@ -126,20 +137,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={onDownloadDocx}
               disabled={isDownloading}
               className="px-3.5 py-1.5 rounded-l-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 flex items-center gap-1.5 transition-all cursor-pointer border border-blue-500"
-              title="Tải văn bản Word .docx với công thức OMML"
+              title="Tải văn bản Word .docx với công thức OMML & hình vẽ"
             >
               <Download className="w-4 h-4" />
               <span>
                 {isDownloading ? 'Đang xuất...' : 'Tải Word (.docx)'}
               </span>
-              {equationCount > 0 && (
+              {(equationCount > 0 || geometryCount > 0) && (
                 <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-blue-700 text-[10px] text-blue-100 font-mono">
-                  {equationCount}
+                  {equationCount} eq {geometryCount > 0 && `• ${geometryCount} fig`}
                 </span>
               )}
             </button>
 
-            {/* Split button for more export options */}
+            {/* Split button */}
             <button
               onClick={() => {
                 setExportDropdownOpen(!exportDropdownOpen);
@@ -157,7 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="fixed inset-0 z-30"
                   onClick={() => setExportDropdownOpen(false)}
                 />
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-slate-900 border border-slate-750 shadow-2xl py-1.5 z-40 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-64 rounded-xl bg-slate-900 border border-slate-750 shadow-2xl py-1.5 z-40 animate-in fade-in zoom-in-95 duration-150">
                   <button
                     onClick={() => {
                       onDownloadDocx();
@@ -168,7 +179,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <Download className="w-4 h-4 text-blue-400" />
                     <div>
                       <div className="font-medium text-white">File Word Chuẩn (.docx)</div>
-                      <div className="text-[10px] text-slate-400">Công thức OMML bản quyền</div>
+                      <div className="text-[10px] text-slate-400">Chứa công thức OMML & hình vẽ nhúng</div>
                     </div>
                   </button>
 
@@ -182,7 +193,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <FileDown className="w-4 h-4 text-emerald-400" />
                     <div>
                       <div className="font-medium text-white">File Word HTML (.doc)</div>
-                      <div className="text-[10px] text-slate-400">Mã hóa MathML / Web Archive</div>
+                      <div className="text-[10px] text-slate-400">Mã hóa MathML & vector SVG</div>
                     </div>
                   </button>
                 </div>

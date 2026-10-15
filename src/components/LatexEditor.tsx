@@ -9,6 +9,7 @@ import {
   FileCode,
   Check,
   RotateCcw,
+  Compass,
 } from 'lucide-react';
 import { ConversionStats } from '../types';
 
@@ -68,7 +69,6 @@ export const LatexEditor: React.FC<LatexEditorProps> = ({
       };
       reader.readAsText(file);
     }
-    // reset input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -121,10 +121,10 @@ export const LatexEditor: React.FC<LatexEditorProps> = ({
         <div className="flex items-center space-x-2">
           <FileCode className="w-4 h-4 text-indigo-400" />
           <h2 className="text-xs font-semibold text-white tracking-wide uppercase">
-            Mã Nguồn LaTeX
+            Mã Nguồn LaTeX & Hình Học
           </h2>
           <span className="text-[11px] text-slate-500 font-mono">
-            {lineCount} dòng • {stats.wordCount} từ
+            {lineCount} dòng • {stats.wordCount} từ {stats.geometryCount > 0 && `• ${stats.geometryCount} hình TikZ`}
           </span>
         </div>
 
@@ -132,10 +132,10 @@ export const LatexEditor: React.FC<LatexEditorProps> = ({
         <div className="flex items-center space-x-1">
           <button
             onClick={onOpenHelper}
-            className="px-2.5 py-1 text-xs font-medium text-indigo-300 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-lg flex items-center gap-1 transition-colors"
-            title="Mở bảng ký hiệu toán học"
+            className="px-2.5 py-1 text-xs font-medium text-emerald-300 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 rounded-lg flex items-center gap-1 transition-colors"
+            title="Mở bảng ký hiệu toán & hình học"
           >
-            <Sparkles className="w-3.5 h-3.5" /> Ký hiệu toán
+            <Compass className="w-3.5 h-3.5" /> Ký hiệu Hình học
           </button>
 
           <input
@@ -166,7 +166,7 @@ export const LatexEditor: React.FC<LatexEditorProps> = ({
             className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
             title="Sao chép toàn bộ mã"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
           </button>
 
           <button
@@ -187,9 +187,109 @@ export const LatexEditor: React.FC<LatexEditorProps> = ({
         </div>
       </div>
 
-      {/* Quick Insert Snippet Toolbar */}
+      {/* Quick Insert Snippet Toolbar - Math & Geometry */}
       <div className="flex items-center px-3 py-1.5 bg-slate-900/70 border-b border-slate-800/80 overflow-x-auto gap-1 text-xs shrink-0 scrollbar-none">
-        <span className="text-[11px] text-slate-500 font-medium px-1 select-none shrink-0">Chèn nhanh:</span>
+        <span className="text-[11px] text-emerald-400 font-semibold px-1 select-none shrink-0 flex items-center gap-1">
+          <Compass className="w-3 h-3" /> Hình học:
+        </span>
+        <button
+          type="button"
+          onClick={() => insertSnippet('\\vec{', '}')}
+          className="px-2 py-0.5 rounded bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 font-mono text-[11px] shrink-0 transition-colors"
+          title="Vectơ AB"
+        >
+          \vec&#123;AB&#125;
+        </button>
+        <button
+          type="button"
+          onClick={() => insertSnippet('\\widehat{', '}')}
+          className="px-2 py-0.5 rounded bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 font-mono text-[11px] shrink-0 transition-colors"
+          title="Góc ABC (mũ)"
+        >
+          \widehat&#123;ABC&#125;
+        </button>
+        <button
+          type="button"
+          onClick={() => insertSnippet('\\triangle ', '')}
+          className="px-2 py-0.5 rounded bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 font-mono text-[11px] shrink-0 transition-colors"
+          title="Tam giác"
+        >
+          \triangle
+        </button>
+        <button
+          type="button"
+          onClick={() => insertSnippet(' \\perp ')}
+          className="px-2 py-0.5 rounded bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 font-mono text-[11px] shrink-0 transition-colors"
+          title="Vuông góc"
+        >
+          \perp
+        </button>
+        <button
+          type="button"
+          onClick={() => insertSnippet(' \\parallel ')}
+          className="px-2 py-0.5 rounded bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 font-mono text-[11px] shrink-0 transition-colors"
+          title="Song song"
+        >
+          \parallel
+        </button>
+        <button
+          type="button"
+          onClick={() => insertSnippet('90^\\circ')}
+          className="px-2 py-0.5 rounded bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 font-mono text-[11px] shrink-0 transition-colors"
+          title="Góc 90 độ"
+        >
+          90^\circ
+        </button>
+        <button
+          type="button"
+          onClick={() => insertSnippet('d(M, (P)) = ')}
+          className="px-2 py-0.5 rounded bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 font-mono text-[11px] shrink-0 transition-colors"
+          title="Khoảng cách điểm tới mặt phẳng"
+        >
+          d(M, (P))
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            insertSnippet(`\\begin{tikzpicture}
+\\draw[thick] (0,0) coordinate (B) -- (4,0) coordinate (C) -- (1,3) coordinate (A) -- cycle;
+\\draw[dashed] (1,3) -- (1,0) coordinate (H);
+\\node[above] at (A) {$A$};
+\\node[below left] at (B) {$B$};
+\\node[below right] at (C) {$C$};
+\\node[below] at (H) {$H$};
+\\end{tikzpicture}\n`)
+          }
+          className="px-2 py-0.5 rounded bg-emerald-900/80 hover:bg-emerald-800 text-white font-medium text-[11px] shrink-0 transition-colors shadow-xs"
+          title="Chèn mã TikZ vẽ Tam giác có đường cao"
+        >
+          + TikZ Tam Giác
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            insertSnippet(`\\begin{tikzpicture}
+\\coordinate (A) at (0,0);
+\\coordinate (B) at (1.5,-1.2);
+\\coordinate (C) at (5,0);
+\\coordinate (S) at (0,3.5);
+\\draw[dashed, thick] (A) -- (C);
+\\draw[thick] (S) -- (A) -- (B) -- (C) -- (S);
+\\draw[thick] (S) -- (B);
+\\node[left] at (A) {$A$};
+\\node[below] at (B) {$B$};
+\\node[right] at (C) {$C$};
+\\node[above] at (S) {$S$};
+\\end{tikzpicture}\n`)
+          }
+          className="px-2 py-0.5 rounded bg-emerald-900/80 hover:bg-emerald-800 text-white font-medium text-[11px] shrink-0 transition-colors shadow-xs"
+          title="Chèn mã TikZ vẽ Hình chóp S.ABC 3D"
+        >
+          + TikZ Chóp 3D
+        </button>
+
+        <span className="text-slate-600 px-1">|</span>
+        <span className="text-[11px] text-slate-500 font-medium select-none shrink-0">Đại số:</span>
         <button
           type="button"
           onClick={() => insertSnippet('$', '$')}
@@ -224,90 +324,31 @@ export const LatexEditor: React.FC<LatexEditorProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => insertSnippet('^{', '}')}
-          className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 transition-colors"
-          title="Số mũ lũy thừa"
-        >
-          x^n
-        </button>
-        <button
-          type="button"
-          onClick={() => insertSnippet('_{', '}')}
-          className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 transition-colors"
-          title="Chỉ số dưới"
-        >
-          x_i
-        </button>
-        <button
-          type="button"
-          onClick={() => insertSnippet('\\int_{0}^{1} ', ' dx')}
-          className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 transition-colors"
-          title="Tích phân"
-        >
-          \int
-        </button>
-        <button
-          type="button"
-          onClick={() => insertSnippet('\\sum_{i=1}^{n} ', '')}
-          className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 transition-colors"
-          title="Tổng sigma"
-        >
-          \sum
-        </button>
-        <button
-          type="button"
-          onClick={() => insertSnippet('\\begin{pmatrix}\n  a & b \\\\\n  c & d\n\\end{pmatrix}')}
-          className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 transition-colors"
-          title="Ma trận 2x2"
-        >
-          Ma trận
-        </button>
-        <button
-          type="button"
           onClick={() => insertSnippet('\\begin{cases}\n  x + y = 1 \\\\\n  x - y = 0\n\\end{cases}')}
           className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 transition-colors"
           title="Hệ phương trình cases"
         >
           Cases
         </button>
-        <button
-          type="button"
-          onClick={() => insertSnippet('\\textbf{Câu 1:} ')}
-          className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 transition-colors"
-          title="Câu hỏi trắc nghiệm"
-        >
-          Câu 1:
-        </button>
-        <button
-          type="button"
-          onClick={() => insertSnippet('\\section{', '}')}
-          className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 transition-colors"
-          title="Tiêu đề mục section"
-        >
-          \section
-        </button>
       </div>
 
       {/* Editor Body */}
       <div className="flex-1 relative flex">
-        {/* Line numbers display */}
         <div className="w-11 py-3 bg-slate-950/80 text-slate-600 font-mono text-xs select-none text-right pr-2 shrink-0 border-r border-slate-850 overflow-hidden leading-6">
           {Array.from({ length: Math.min(lineCount, 500) }).map((_, i) => (
             <div key={i}>{i + 1}</div>
           ))}
         </div>
 
-        {/* Text Area */}
         <textarea
           ref={textareaRef}
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder="Nhập hoặc dán mã LaTeX tại đây... (Ví dụ: Cho phương trình $ax^2 + bx + c = 0$ có nghiệm $x = \frac{-b \pm \sqrt{\Delta}}{2a}$)"
+          placeholder="Nhập mã LaTeX và hình học... (Hỗ trợ \vec{AB}, \widehat{ABC}, \triangle, \perp, \parallel, tikzpicture, Oxyz...)"
           className="flex-1 p-3 bg-transparent text-slate-200 font-mono text-xs leading-6 resize-none focus:outline-none placeholder-slate-600 overflow-y-auto selection:bg-indigo-500/30 selection:text-white"
           spellCheck={false}
         />
 
-        {/* Drag and Drop Overlay */}
         {isDragging && (
           <div className="absolute inset-0 bg-indigo-950/80 backdrop-blur-xs flex flex-col items-center justify-center pointer-events-none z-20 border-2 border-dashed border-indigo-400 m-2 rounded-xl">
             <Upload className="w-10 h-10 text-indigo-300 animate-bounce mb-2" />
@@ -320,13 +361,13 @@ export const LatexEditor: React.FC<LatexEditorProps> = ({
       {/* Editor Footer */}
       <div className="px-4 py-2 bg-slate-900 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5">
-            <Code className="w-3.5 h-3.5 text-indigo-400" />
-            Hỗ trợ $...$, $$...$$, align, equation, cases, tabular, matrix...
+          <span className="flex items-center gap-1.5 text-emerald-400">
+            <Compass className="w-3.5 h-3.5" />
+            Hỗ trợ hình học phẳng, không gian 3D, tọa độ Oxyz & hình vẽ TikZ
           </span>
         </div>
         <div className="text-slate-500 font-mono hidden sm:block">
-          Kéo thả file .tex trực tiếp vào bảng
+          Mở file .tex hoặc kéo thả trực tiếp
         </div>
       </div>
     </div>

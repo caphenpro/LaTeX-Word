@@ -9,11 +9,11 @@ import { DocumentPreview } from './components/DocumentPreview';
 import { SettingsModal } from './components/SettingsModal';
 import { WordGuideModal } from './components/WordGuideModal';
 import { FormulaHelperModal } from './components/FormulaHelperModal';
-import { FileEdit, Eye, AlertCircle } from 'lucide-react';
+import { FileEdit, Eye, AlertCircle, Compass } from 'lucide-react';
 
 const DEFAULT_SETTINGS: DocSettings = {
-  docTitle: 'Tai_Lieu_Toan_Hoc',
-  author: 'Ban Chuyên Môn',
+  docTitle: 'Chuyen_De_Hinh_Hoc_Khong_Gian',
+  author: 'Tổ Toán THPT',
   date: '2026',
   fontFamily: 'Times New Roman',
   fontSizePt: 12,
@@ -63,17 +63,17 @@ export default function App() {
 
   // Sanitize filename
   const getCleanFilename = (ext: string) => {
-    const title = docTitle || settings.docTitle || 'Tai_Lieu_Toan';
+    const title = docTitle || settings.docTitle || 'Hinh_Hoc_Va_Toan';
     const clean = title
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zA-Z0-9_-]/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '');
-    return `${clean || 'Tai_Lieu_Toan'}.${ext}`;
+    return `${clean || 'Hinh_Hoc_Va_Toan'}.${ext}`;
   };
 
-  // Primary Action: Download Native Word .docx with OMML
+  // Primary Action: Download Native Word .docx with OMML & embedded geometry drawings
   const handleDownloadDocx = async () => {
     try {
       setIsDownloading(true);
@@ -139,6 +139,7 @@ export default function App() {
         onOpenGuide={() => setIsGuideOpen(true)}
         isDownloading={isDownloading}
         equationCount={stats.equationCount}
+        geometryCount={stats.geometryCount}
       />
 
       {/* Main Workspace */}
@@ -153,7 +154,7 @@ export default function App() {
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <FileEdit className="w-3.5 h-3.5" /> Soạn Thảo LaTeX
+            <FileEdit className="w-3.5 h-3.5" /> Soạn Thảo LaTeX & Hình
           </button>
           <button
             onClick={() => setMobileTab('preview')}
@@ -164,13 +165,25 @@ export default function App() {
             }`}
           >
             <Eye className="w-3.5 h-3.5" /> Xem Trang Word A4
-            {stats.equationCount > 0 && (
+            {(stats.equationCount > 0 || stats.geometryCount > 0) && (
               <span className="px-1.5 py-0.2 rounded-full bg-slate-800 text-[10px]">
-                {stats.equationCount}
+                {stats.equationCount} eq {stats.geometryCount > 0 && `• ${stats.geometryCount} fig`}
               </span>
             )}
           </button>
         </div>
+
+        {/* Geometry & TikZ Info Banner when diagrams exist */}
+        {stats.geometryCount > 0 && (
+          <div className="mb-3 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Compass className="w-4 h-4 shrink-0 text-emerald-400" />
+              <span>
+                Đã phát hiện <strong>{stats.geometryCount}</strong> hình vẽ TikZ hình học. Hình ảnh sẽ được tự động vẽ vector và nhúng trực tiếp vào file Word (.docx) khi tải về!
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Errors / Warnings Bar if any */}
         {stats.errorCount > 0 && (
@@ -178,7 +191,7 @@ export default function App() {
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
               <span>
-                Phát hiện <strong>{stats.errorCount}</strong> cảnh báo cú pháp công thức. Ứng dụng đã tự động sửa lỗi và bảo toàn định dạng khi xuất file Word.
+                Phát hiện <strong>{stats.errorCount}</strong> cảnh báo cú pháp công thức hoặc hình vẽ. Ứng dụng đã xử lý an toàn và bảo toàn nội dung khi xuất file Word.
               </span>
             </div>
           </div>
@@ -186,7 +199,7 @@ export default function App() {
 
         {/* Split View Container */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 min-h-[600px] h-[calc(100vh-120px)]">
-          {/* Left Pane: LaTeX Editor */}
+          {/* Left Pane: LaTeX & Geometry Editor */}
           <div
             className={`h-full flex flex-col ${
               mobileTab === 'editor' ? 'flex' : 'hidden lg:flex'

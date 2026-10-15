@@ -11,6 +11,7 @@ import {
   EquationBlock,
   TitleBlock,
   SectionBlock,
+  GeometryBlock,
 } from '../types';
 import katex from 'katex';
 import {
@@ -22,6 +23,8 @@ import {
   Code2,
   FileText,
   FileCheck2,
+  Compass,
+  Download,
 } from 'lucide-react';
 import { copyToClipboard } from '../utils/mathUtils';
 
@@ -124,6 +127,17 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ blocks, settin
     setTimeout(() => setToastMessage(null), 2500);
   };
 
+  const downloadSvgFile = (svgStr: string, filename = 'hinh_ve_hinh_hoc.svg') => {
+    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Đã tải file ảnh vector SVG!');
+  };
+
   // Extract all equations for inspector tab
   const allEquations: Array<{
     id: string;
@@ -223,13 +237,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ blocks, settin
     });
   };
 
-  // Font class for simulation
   const fontStyle = {
     fontFamily: settings.fontFamily,
     fontSize: `${settings.fontSizePt}pt`,
   };
 
-  // Padding corresponding to margins
   const marginPadding =
     settings.margins === 'narrow' ? 'p-8 sm:p-10' : settings.margins === 'wide' ? 'p-12 sm:p-20' : 'p-10 sm:p-14';
 
@@ -260,8 +272,13 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ blocks, settin
           </button>
         </div>
 
-        {/* Live conversion indicator */}
-        <div className="flex items-center gap-3 text-xs text-slate-400">
+        {/* Status Indicators */}
+        <div className="flex items-center gap-2.5 text-xs text-slate-400">
+          {stats.geometryCount > 0 && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-emerald-400 font-medium bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              <Compass className="w-3.5 h-3.5" /> {stats.geometryCount} hình TikZ
+            </span>
+          )}
           <span className="hidden sm:inline-flex items-center gap-1 text-slate-400">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             Chuẩn OMML
@@ -388,6 +405,79 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ blocks, settin
                     );
                   }
 
+                  case 'geometry': {
+                    const g = block as GeometryBlock;
+                    return (
+                      <div
+                        key={g.id || idx}
+                        className="my-6 p-4 rounded-xl border border-slate-200 bg-slate-50/70 text-center relative group"
+                      >
+                        <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-200/80 text-xs text-slate-500">
+                          <span className="flex items-center gap-1.5 font-medium text-emerald-700">
+                            <Compass className="w-4 h-4 text-emerald-600" />
+                            Hình học TikZ (Được chèn vào Word)
+                          </span>
+                          <div className="flex items-center gap-1">
+                            {g.svg && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(g.svg || '');
+                                    showToast('Đã chép mã SVG của hình vẽ!');
+                                  }}
+                                  className="px-2 py-0.5 rounded text-[11px] bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors"
+                                >
+                                  Chép SVG
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => downloadSvgFile(g.svg || '')}
+                                  className="px-2 py-0.5 rounded text-[11px] bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors flex items-center gap-1"
+                                >
+                                  <Download className="w-3 h-3" /> Tải SVG
+                                </button>
+                              </>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(g.code);
+                                showToast('Đã chép mã nguồn TikZ!');
+                              }}
+                              className="px-2 py-0.5 rounded text-[11px] bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 transition-colors"
+                            >
+                              Chép TikZ
+                            </button>
+                          </div>
+                        </div>
+
+                        {g.svg ? (
+                          <div
+                            className="flex justify-center items-center overflow-x-auto py-2"
+                            dangerouslySetInnerHTML={{ __html: g.svg }}
+                          />
+                        ) : g.error ? (
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs text-left">
+                            <div className="font-semibold mb-1 flex items-center gap-1">
+                              <AlertTriangle className="w-4 h-4 text-amber-600" /> Cảnh báo mã TikZ:
+                            </div>
+                            <p className="font-mono text-[11px]">{g.error}</p>
+                            <p className="mt-1 text-[11px] text-slate-600">
+                              Mã TikZ vẫn được bảo toàn khi chỉnh sửa và lưu.
+                            </p>
+                          </div>
+                        ) : null}
+
+                        {g.caption && (
+                          <p className="text-center italic text-xs text-slate-600 mt-2">
+                            Hình: {g.caption}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }
+
                   case 'list': {
                     const b = block as ListBlock;
                     const Tag = b.ordered ? 'ol' : 'ul';
@@ -481,17 +571,17 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ blocks, settin
                   <span className="text-lg font-bold text-white">{allEquations.length}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Công thức khối (Display):</span>
+                  <span className="text-slate-500 block">Công thức khối:</span>
                   <span className="text-lg font-bold text-indigo-400">{stats.displayEquationCount}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Nội dòng (Inline):</span>
-                  <span className="text-lg font-bold text-emerald-400">{stats.inlineEquationCount}</span>
+                  <span className="text-slate-500 block">Hình vẽ TikZ:</span>
+                  <span className="text-lg font-bold text-emerald-400">{stats.geometryCount}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <FileCheck2 className="w-5 h-5 text-emerald-400" />
-                <span className="text-emerald-300 font-medium">100% Sẵn sàng xuất OMML</span>
+                <span className="text-emerald-300 font-medium">Toán & Hình học Sẵn sàng xuất</span>
               </div>
             </div>
 
@@ -536,7 +626,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ blocks, settin
                     </div>
                   </div>
 
-                  {/* Rendered Preview */}
                   <div className="p-3 bg-white rounded-lg text-slate-900 overflow-x-auto text-center">
                     <MathView
                       latex={eq.latex}
@@ -547,7 +636,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ blocks, settin
                     />
                   </div>
 
-                  {/* LaTeX Source Code */}
                   <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-slate-950 p-2 rounded-lg border border-slate-850 overflow-x-auto">
                     <Code2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                     <span className="text-indigo-300">{eq.latex}</span>

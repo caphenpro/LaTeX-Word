@@ -11,8 +11,10 @@ import {
   CalloutBlock,
   TitleBlock,
   SectionBlock,
+  GeometryBlock,
 } from '../types';
 import { latexToOmml } from './mathUtils';
+import { renderTikzToSvg } from './tikzUtils';
 
 /**
  * Strips comments from LaTeX code unless escaped
@@ -21,7 +23,6 @@ function stripComments(latex: string): string {
   const lines = latex.split('\n');
   return lines
     .map(line => {
-      // Find comment character % not preceded by \
       let inComment = false;
       let cleaned = '';
       for (let i = 0; i < line.length; i++) {
@@ -84,11 +85,6 @@ export function parseInlineSegments(text: string): TextSegment[] {
   const segments: TextSegment[] = [];
   if (!text || text.length === 0) return segments;
 
-  // Regex to match inline math $...$ or \(...\)
-  // or formatted spans like \textbf{...}, \textit{...}, \underline{...}, etc.
-  let remaining = text;
-
-  // Matcher for math and commands
   const regex = /(\$([^\$]+)\$|\\\(([\s\S]*?)\\\)|\\textbf\{([^}]+)\}|\\textit\{([^}]+)\}|\\emph\{([^}]+)\}|\\underline\{([^}]+)\}|\\texttt\{([^}]+)\}|\\textcolor\{([^}]+)\}\{([^}]+)\}|\\sout\{([^}]+)\})/g;
 
   let lastIndex = 0;
@@ -199,6 +195,7 @@ export function parseLatexDocument(rawLatex: string, settings?: Partial<DocSetti
   let equationCounter = 0;
   let inlineEquationCount = 0;
   let displayEquationCount = 0;
+  let geometryCount = 0;
   let errorCount = 0;
 
   // Add Title block if \maketitle or title/author/date exists
@@ -215,21 +212,7 @@ export function parseLatexDocument(rawLatex: string, settings?: Partial<DocSetti
     } as TitleBlock);
   }
 
-  // Clean out \maketitle token
   const bodyText = cleanBody.replace(/\\maketitle/g, '');
-
-  // Split content by major block boundaries
-  // Blocks include:
-  // - \section, \subsection, \subsubsection
-  // - \begin{equation/align/gather}...\end{...}
-  // - \[ ... \] or $$ ... $$
-  // - \begin{enumerate/itemize}...\end{...}
-  // - \begin{tabular/table}...\end{...}
-  // - \begin{theorem/definition/lemma/proof/quote}...\end{...}
-  // - \hrule
-  // - Normal paragraphs separated by blank lines
-
-  // Tokenize blocks using regular expressions
   const lines = bodyText.split('\n');
   let i = 0;
 
@@ -239,6 +222,49 @@ export function parseLatexDocument(rawLatex: string, settings?: Partial<DocSetti
     // Skip empty lines
     if (!line) {
       i++;
+      continue;
+    }
+
+    // Check TikZ Geometry Diagram: \begin{tikzpicture} or \begin{figure}...\begin{tikzpicture}
+    if (line.includes('\\begin{tikzpicture}')) {
+      let tikzCode = '';
+      let caption: string | undefined;
+
+      while (i < lines.length) {
+        const curLine = lines[i];
+        const capMatch = curLine.match(/\\caption\s*\{([^}]+)\}/);
+        if (capMatch) {
+          caption = capMatch[1];
+        }
+        tikzCode += curLine + '\n';
+        if (curLine.includes('\\end{tikzpicture}')) {
+          i++;
+          break;
+        }
+        i++;
+      }
+
+      // Check if wrapped in \end{figure} on next line
+      if (i < lines.length && lines[i].includes('\\end{figure}')) {
+        const capMatch = lines[i].match(/\\caption\s*\{([^}]+)\}/);
+        if (capMatch) caption = capMatch[1];
+        i++;
+      }
+
+      geometryCount++;
+      const { svg, error, width, height } = renderTikzToSvg(tikzCode);
+      if (error) errorCount++;
+
+      blocks.push({
+        id: `geom-${blocks.length}`,
+        type: 'geometry',
+        code: tikzCode.trim(),
+        svg,
+        width,
+        height,
+        caption,
+        error,
+      } as GeometryBlock);
       continue;
     }
 
@@ -274,7 +300,6 @@ export function parseLatexDocument(rawLatex: string, settings?: Partial<DocSetti
       let mathContent = '';
       let foundEnd = false;
 
-      // Check if ends on same line
       const sameLineEnd = line.indexOf(endTag);
       if (sameLineEnd !== -1) {
         mathContent = line.substring(mathEnvStart[0].length, sameLineEnd).trim();
@@ -380,7 +405,6 @@ export function parseLatexDocument(rawLatex: string, settings?: Partial<DocSetti
         i++;
       }
 
-      // Parse \item lines
       const items: Array<{ id: string; segments: TextSegment[] }> = [];
       const itemBlocks = listLines.join('\n').split(/\\item\s*/).filter(Boolean);
 
@@ -428,7 +452,6 @@ export function parseLatexDocument(rawLatex: string, settings?: Partial<DocSetti
         i++;
       }
 
-      // Extract rows from tabular
       const tabMatch = tableContent.match(/\\begin\{tabular\}\s*\{([^}]+)\}([\s\S]*?)\\end\{tabular\}/);
       if (tabMatch) {
         const innerContent = tabMatch[2];
@@ -503,8 +526,7 @@ export function parseLatexDocument(rawLatex: string, settings?: Partial<DocSetti
       continue;
     }
 
-    // Default: Regular Paragraph
-    // Accumulate consecutive lines until an empty line or block environment starts
+    // Regular Paragraph
     let paragraphText = line;
     i++;
     while (i < lines.length) {
@@ -551,6 +573,7 @@ export function parseLatexDocument(rawLatex: string, settings?: Partial<DocSetti
     equationCount: totalEquations,
     inlineEquationCount,
     displayEquationCount,
+    geometryCount,
     wordCount,
     charCount: rawLatex.length,
     blockCount: blocks.length,

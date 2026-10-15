@@ -38,6 +38,7 @@ export type BlockType =
   | 'list'
   | 'table'
   | 'callout'
+  | 'geometry'
   | 'divider';
 
 export interface BaseBlock {
@@ -72,6 +73,16 @@ export interface EquationBlock extends BaseBlock {
   error?: string;
   equationNumber?: number;
   label?: string;
+}
+
+export interface GeometryBlock extends BaseBlock {
+  type: 'geometry';
+  code: string;
+  svg?: string;
+  width?: number;
+  height?: number;
+  caption?: string;
+  error?: string;
 }
 
 export interface ListBlock extends BaseBlock {
@@ -109,6 +120,7 @@ export type ParsedBlock =
   | SectionBlock
   | ParagraphBlock
   | EquationBlock
+  | GeometryBlock
   | ListBlock
   | TableBlock
   | CalloutBlock
@@ -118,6 +130,7 @@ export interface ConversionStats {
   equationCount: number;
   inlineEquationCount: number;
   displayEquationCount: number;
+  geometryCount: number;
   wordCount: number;
   charCount: number;
   blockCount: number;

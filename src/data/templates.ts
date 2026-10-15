@@ -2,15 +2,214 @@ export interface TemplateItem {
   id: string;
   name: string;
   description: string;
-  category: 'exam' | 'reference' | 'paper' | 'simple';
+  category: 'geometry' | 'exam' | 'reference' | 'paper' | 'simple';
   latex: string;
 }
 
 export const TEMPLATES: TemplateItem[] = [
   {
+    id: 'geometry-spatial-exam',
+    name: 'Đề Thi Hình Học Không Gian & Oxyz (Có Hình Vẽ TikZ)',
+    description: 'Đề bài hình học không gian gồm hình chóp S.ABC, góc, khoảng cách, phương trình mặt cầu và hình vẽ TikZ 3D',
+    category: 'geometry',
+    latex: `\\documentclass{article}
+\\usepackage{amsmath}
+\\usepackage{amsfonts}
+\\usepackage{tikz}
+
+\\title{CHUYÊN ĐỀ HÌNH HỌC KHÔNG GIAN & TỌA ĐỘ OXYZ}
+\\author{Tổ Toán - Khảo Sát Ôn Thi THPT}
+\\date{Năm học 2026 - 2027}
+
+\\begin{document}
+\\maketitle
+
+\\section{Hình Học Không Gian Cổ Điển}
+
+\\textbf{Bài toán 1:} Cho hình chóp $S.ABC$ có đáy $ABC$ là tam giác vuông tại $B$, $AB = a$, $BC = a\\sqrt{3}$. Cạnh bên $SA$ vuông góc với mặt phẳng đáy $(ABC)$ và $SA = 2a$.
+
+\\begin{tikzpicture}[scale=1]
+  % Coordinates
+  \\coordinate (A) at (0,0);
+  \\coordinate (B) at (1.5,-1.2);
+  \\coordinate (C) at (5,0);
+  \\coordinate (S) at (0,3.5);
+  
+  % Dashed line
+  \\draw[dashed, thick] (A) -- (C);
+  
+  % Solid lines
+  \\draw[thick] (S) -- (A) -- (B) -- (C) -- (S);
+  \\draw[thick] (S) -- (B);
+  
+  % Right angle at A (SA perp ABC)
+  \\draw (0,0.3) -- (0.3,0.3) -- (0.3,0);
+  
+  % Nodes
+  \\node[left] at (A) {$A$};
+  \\node[below] at (B) {$B$};
+  \\node[right] at (C) {$C$};
+  \\node[above] at (S) {$S$};
+\\end{tikzpicture}
+
+\\begin{enumerate}
+  \\item Chứng minh rằng tam giác $SBC$ vuông tại $B$.
+  \\[
+  \\begin{cases}
+  BC \\perp AB \\\\
+  BC \\perp SA \\quad (\\text{do } SA \\perp (ABC))
+  \\end{cases}
+  \\implies BC \\perp (SAB) \\implies BC \\perp SB
+  \\]
+  
+  \\item Tính thể tích khối chóp $S.ABC$:
+  \\[
+  V_{S.ABC} = \\frac{1}{3} S_{\\triangle ABC} \\cdot SA = \\frac{1}{3} \\left(\\frac{1}{2} a \\cdot a\\sqrt{3}\\right) \\cdot 2a = \\frac{a^3\\sqrt{3}}{3}
+  \\]
+  
+  \\item Tính khoảng cách từ điểm $A$ đến mặt phẳng $(SBC)$. Kẻ $AH \\perp SB$ ($H \\in SB$):
+  \\[
+  d(A, (SBC)) = AH = \\frac{SA \\cdot AB}{\\sqrt{SA^2 + AB^2}} = \\frac{2a \\cdot a}{\\sqrt{4a^2 + a^2}} = \\frac{2a\\sqrt{5}}{5}
+  \\]
+\\end{enumerate}
+
+\\section{Phương Pháp Tọa Độ Trong Không Gian Oxyz}
+
+Trong không gian $Oxyz$, cho bốn điểm $A(1; 0; 2)$, $B(-1; 1; 3)$, $C(3; 2; 0)$ và $D(1; 1; 1)$.
+
+\\begin{itemize}
+  \\item Vectơ chỉ phương và độ dài đoạn thẳng:
+  \\[
+  \\vec{AB} = (-2; 1; 1) \\implies |\\vec{AB}| = \\sqrt{(-2)^2 + 1^2 + 1^2} = \\sqrt{6}
+  \\]
+  
+  \\item Tích có hướng giữa hai vectơ $\\vec{AB}$ và $\\vec{AC}$:
+  \\[
+  \\vec{AC} = (2; 2; -2) \\implies [\\vec{AB}, \\vec{AC}] = \\left( -4; -2; -6 \\right)
+  \\]
+  
+  \\item Phương trình tổng quát của mặt phẳng $(ABC)$ đi qua $A(1;0;2)$ nhận $\\vec{n} = (2; 1; 3)$ làm vectơ pháp tuyến:
+  \\[
+  2(x - 1) + 1(y - 0) + 3(z - 2) = 0 \\iff 2x + y + 3z - 8 = 0
+  \\]
+  
+  \\item Phương trình mặt cầu $(S)$ tâm $I(a; b; c)$, bán kính $R$:
+  \\[
+  (S): (x - a)^2 + (y - b)^2 + (z - c)^2 = R^2
+  \\]
+\\end{itemize}
+
+\\end{document}`,
+  },
+  {
+    id: 'geometry-plane-tikz',
+    name: 'Hình Học Phẳng & Hệ Trục Oxy (Hình Vẽ TikZ)',
+    description: 'Hệ thức lượng trong tam giác, đường tròn, góc định hướng và hệ trục tọa độ Oxy trực quan',
+    category: 'geometry',
+    latex: `\\documentclass{article}
+\\usepackage{amsmath}
+\\usepackage{tikz}
+
+\\title{HỆ THỨC LƯỢNG TRONG TAM GIÁC & TỌA ĐỘ OXY}
+\\author{Tổ Hình Học}
+\\date{2026}
+
+\\begin{document}
+\\maketitle
+
+\\section{Hệ Thức Lượng & Các Định Lý Kinh Điển}
+
+\\begin{tikzpicture}[scale=1]
+  \\draw[thick] (0,0) coordinate (B) -- (4.5,0) coordinate (C) -- (1.2,3) coordinate (A) -- cycle;
+  \\draw[dashed] (1.2,3) -- (1.2,0) coordinate (H);
+  \\draw (1.2,0.25) -- (1.45,0.25) -- (1.45,0);
+  
+  \\node[above] at (A) {$A$};
+  \\node[below left] at (B) {$B$};
+  \\node[below right] at (C) {$C$};
+  \\node[below] at (H) {$H$};
+\\end{tikzpicture}
+
+\\textbf{1. Định lý côsin và định lý sin:}
+\\[
+a^2 = b^2 + c^2 - 2bc \\cos \\widehat{A}, \\quad \\frac{a}{\\sin \\widehat{A}} = \\frac{b}{\\sin \\widehat{B}} = \\frac{c}{\\sin \\widehat{C}} = 2R
+\\]
+
+\\textbf{2. Các công thức tính diện tích tam giác $S$:}
+\\[
+S = \\frac{1}{2} a h_a = \\frac{1}{2} ab \\sin \\widehat{C} = \\frac{abc}{4R} = pr = \\sqrt{p(p-a)(p-b)(p-c)}
+\\]
+với $p = \\frac{a + b + c}{2}$ là nửa chu vi tam giác.
+
+\\section{Hệ Trục Tọa Độ Đề-Các Oxy}
+
+\\begin{tikzpicture}[scale=0.9]
+  \\draw[->, thick] (-2.5,0) -- (3.5,0) node[right] {$x$};
+  \\draw[->, thick] (0,-2.5) -- (0,3.5) node[above] {$y$};
+  \\node[below left] at (0,0) {$O$};
+  \\draw[blue, thick] (0,0) circle (2);
+  \\node[above right, blue] at (1.4, 1.4) {$(C): x^2 + y^2 = R^2$};
+\\end{tikzpicture}
+
+Góc giữa hai đường thẳng $d_1: A_1 x + B_1 y + C_1 = 0$ và $d_2: A_2 x + B_2 y + C_2 = 0$:
+\\[
+\\cos(d_1, d_2) = \\frac{|A_1 A_2 + B_1 B_2|}{\\sqrt{A_1^2 + B_1^2} \\cdot \\sqrt{A_2^2 + B_2^2}}
+\\]
+
+\\end{document}`,
+  },
+  {
+    id: 'geometry-cheat-sheet',
+    name: 'Sổ Tay Công Thức Hình Học Toàn Diện',
+    description: 'Tổng hợp công thức hình học phẳng, thể tích đa diện, nón - trụ - cầu và tọa độ không gian',
+    category: 'reference',
+    latex: `\\documentclass{article}
+\\usepackage{amsmath}
+
+\\title{CẨM NANG TOÀN BỘ CÔNG THỨC HÌNH HỌC THPT}
+\\author{Hội Đồng Khoa Học Sư Phạm}
+\\date{Phiên bản 2026}
+
+\\begin{document}
+\\maketitle
+
+\\section{Thể Tích Các Khối Đa Diện}
+
+\\begin{itemize}
+  \\item \\textbf{Khối chóp:} $V = \\frac{1}{3} S_{đáy} \\cdot h$
+  \\item \\textbf{Khối lăng trụ:} $V = S_{đáy} \\cdot h$
+  \\item \\textbf{Khối hộp chữ nhật:} $V = a \\cdot b \\cdot c, \\quad d = \\sqrt{a^2 + b^2 + c^2}$
+  \\item \\textbf{Khối tứ diện đều cạnh $a$:} $V = \\frac{a^3 \\sqrt{2}}{12}$
+  \\item \\textbf{Khối chóp tam giác đều cạnh đáy $a$, cạnh bên $b$:} $h = \\sqrt{b^2 - \\frac{a^2}{3}}$
+\\end{itemize}
+
+\\section{Khối Tròn Xoay (Nón - Trụ - Cầu)}
+
+\\begin{tabular}{|c|c|c|c|}
+Khối Tròn Xoay & Diện tích xung quanh ($S_{xq}$) & Diện tích toàn phần ($S_{tp}$) & Thể tích ($V$) \\\\
+Hình Nón & $\\pi R l$ & $\\pi R l + \\pi R^2$ & $\\frac{1}{3}\\pi R^2 h$ \\\\
+Hình Trụ & $2\\pi R h$ & $2\\pi R h + 2\\pi R^2$ & $\\pi R^2 h$ \\\\
+Mặt Cầu & $4\\pi R^2$ & $4\\pi R^2$ & $\\frac{4}{3}\\pi R^3$ \\\\
+\\end{tabular}
+
+\\section{Hình Học Tọa Độ Oxyz}
+
+\\begin{itemize}
+  \\item Tích có hướng: $[\\vec{u}, \\vec{v}] = (u_2 v_3 - u_3 v_2; u_3 v_1 - u_1 v_3; u_1 v_2 - u_2 v_1)$
+  \\item Diện tích tam giác: $S_{\\triangle ABC} = \\frac{1}{2} |[\\vec{AB}, \\vec{AC}]|$
+  \\item Thể tích khối tứ diện: $V_{ABCD} = \\frac{1}{6} |[\\vec{AB}, \\vec{AC}] \\cdot \\vec{AD}|$
+  \\item Khoảng cách từ điểm $M(x_0; y_0; z_0)$ đến mặt phẳng $(P): Ax + By + Cz + D = 0$:
+  \\[
+  d(M, (P)) = \\frac{|Ax_0 + By_0 + Cz_0 + D|}{\\sqrt{A^2 + B^2 + C^2}}
+  \\]
+\\end{itemize}
+
+\\end{document}`,
+  },
+  {
     id: 'exam-thpt',
-    name: 'Đề thi THPT Quốc Gia (Toán)',
-    description: 'Đề thi trắc nghiệm Toán chuẩn gồm câu hỏi, công thức giải tích, hình học Oxyz và các phương án A, B, C, D',
+    name: 'Đề thi THPT Quốc Gia (Đại số & Giải tích)',
+    description: 'Đề thi trắc nghiệm Toán chuẩn gồm câu hỏi, công thức giải tích, tích phân và các phương án A, B, C, D',
     category: 'exam',
     latex: `\\documentclass{article}
 \\usepackage{amsmath}
@@ -56,25 +255,11 @@ Khoảng cách từ gốc tọa độ $O(0;0;0)$ đến mặt phẳng $(P)$ bằ
   \\item $D. \\frac{5}{\\sqrt{5}}$
 \\end{enumerate}
 
-\\textbf{Câu 4:} Cho số phức $z$ thỏa mãn điều kiện $(1 + 2i)z + 3 - 4i = 0$. Môđun của số phức $z$ là:
-\\[
-|z| = \\sqrt{a^2 + b^2} = \\sqrt{5}
-\\]
-
-\\section{Phần Tự Luận & Ứng Dụng}
-
-\\begin{theorem}
-Nghiệm của phương trình bậc hai $ax^2 + bx + c = 0$ ($a \\neq 0$) với biệt thức $\\Delta = b^2 - 4ac$ được cho bởi:
-\\[
-x_{1,2} = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
-\\]
-\\end{theorem}
-
 \\end{document}`,
   },
   {
     id: 'calculus-handbook',
-    name: 'Sổ tay Giải tích & Đại số',
+    name: 'Sổ tay Giải tích Cao cấp',
     description: 'Tổng hợp các công thức đạo hàm, tích phân, chuỗi Taylor, ma trận và công thức Euler nổi tiếng',
     category: 'reference',
     latex: `\\documentclass{article}
@@ -94,160 +279,11 @@ Công thức Euler liên hệ 5 hằng số cơ bản của toán học:
 e^{i\\pi} + 1 = 0
 \\]
 
-Tích phân Gauss đóng vai trò nền tảng trong xác suất thống kê:
+Tích phân Gauss:
 \\[
 \\int_{-\\infty}^{+\\infty} e^{-x^2} dx = \\sqrt{\\pi}
 \\]
 
-\\section{Khai Triển Chuỗi Taylor}
-
-Chuỗi Taylor của hàm số khả vi vô hạn $f(x)$ tại lân cận điểm $x_0$:
-\\[
-f(x) = \\sum_{n=0}^{\\infty} \\frac{f^{(n)}(x_0)}{n!} (x - x_0)^n
-\\]
-
-Một số khai triển Maclaurin tiêu biểu:
-\\begin{itemize}
-  \\item $e^x = 1 + x + \\frac{x^2}{2!} + \\frac{x^3}{3!} + \\dots = \\sum_{n=0}^{\\infty} \\frac{x^n}{n!}$
-  \\item $\\sin x = x - \\frac{x^3}{3!} + \\frac{x^5}{5!} - \\dots = \\sum_{n=0}^{\\infty} (-1)^n \\frac{x^{2n+1}}{(2n+1)!}$
-  \\item $\\cos x = 1 - \\frac{x^2}{2!} + \\frac{x^4}{4!} - \\dots = \\sum_{n=0}^{\\infty} (-1)^n \\frac{x^{2n}}{(2n)!}$
-\\end{itemize}
-
-\\section{Đại Số Tuyến Tính & Ma Trận}
-
-Ma trận nghịch đảo của ma trận vuông cấp 2:
-\\[
-\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}^{-1} = \\frac{1}{ad - bc} \\begin{pmatrix} d & -b \\\\ -c & a \\end{pmatrix}
-\\]
-
 \\end{document}`,
-  },
-  {
-    id: 'research-paper',
-    name: 'Báo cáo Khoa học / Đồ án',
-    description: 'Cấu trúc bài báo khoa học với Tóm tắt (Abstract), phương trình vi phân, bảng dữ liệu và kết luận',
-    category: 'paper',
-    latex: `\\documentclass{article}
-\\usepackage{amsmath}
-
-\\title{Nghiên Cứu Mô Hình Truyền Nhiệt Phi Tuyến Tính}
-\\author{TS. Trần Hoàng Nam, ThS. Lê Diệu Linh}
-\\date{Tháng 10, 2026}
-
-\\begin{document}
-\\maketitle
-
-\\begin{quote}
-\\textbf{Tóm tắt:} Bài viết trình bày giải pháp giải phương trình truyền nhiệt phi tuyến bằng phương pháp sai phân hữu hạn kết hợp thuật toán tối ưu Gradient Descent.
-\\end{quote}
-
-\\section{Mô Hình Toán Học}
-
-Xét phương trình đạo hàm riêng mô tả quá trình khuếch tán nhiệt trong vật liệu:
-\\[
-\\frac{\\partial u}{\\partial t} = \\alpha \\left( \\frac{\\partial^2 u}{\\partial x^2} + \\frac{\\partial^2 u}{\\partial y^2} \\right) + Q(x, y, t)
-\\]
-với điều kiện biên Dirichlet:
-\\[
-\\begin{cases}
-u(0, y, t) = T_0 \\\\
-u(L, y, t) = T_1 \\\\
-u(x, y, 0) = f(x, y)
-\\end{cases}
-\\]
-
-\\section{Kết Quả Thực Nghiệm}
-
-\\begin{table}
-\\caption{So sánh sai số giữa phương pháp giải tích và phương pháp số}
-\\begin{tabular}{|c|c|c|c|}
-Thời gian (s) & Nhiệt độ lý thuyết ($^\\circ$C) & Thực nghiệm ($^\\circ$C) & Sai số (\\%) \\\\
-0 & 25.0 & 25.0 & 0.00 \\\\
-10 & 42.5 & 42.1 & 0.94 \\\\
-30 & 68.3 & 67.9 & 0.58 \\\\
-60 & 89.7 & 89.2 & 0.55 \\\\
-\\end{tabular}
-\\end{table}
-
-\\section{Kết Luận}
-Mô hình hội tụ với tốc độ bậc hai $O(\\Delta t + \\Delta x^2)$ và sai số trung bình dưới $1\\%$.
-
-\\end{document}`,
-  },
-  {
-    id: 'physics-chemistry',
-    name: 'Công thức Vật Lý & Hóa Học',
-    description: 'Hệ phương trình Maxwell, cơ học lượng tử Schrödinger, quang học sóng và phân rã phóng xạ',
-    category: 'reference',
-    latex: `\\documentclass{article}
-\\usepackage{amsmath}
-
-\\title{CÁC PHƯƠNG TRÌNH VẬT LÝ KINH ĐIỂN}
-\\author{Bộ Môn Vật Lý Đại Cương}
-\\date{2026}
-
-\\begin{document}
-\\maketitle
-
-\\section{Hệ Phương Trình Điện Từ Maxwell}
-
-Trong môi trường chân không, hệ phương trình Maxwell vi phân:
-\\[
-\\nabla \\cdot \\mathbf{E} = \\frac{\\rho}{\\varepsilon_0}
-\\]
-\\[
-\\nabla \\cdot \\mathbf{B} = 0
-\\]
-\\[
-\\nabla \\times \\mathbf{E} = -\\frac{\\partial \\mathbf{B}}{\\partial t}
-\\]
-\\[
-\\nabla \\times \\mathbf{B} = \\mu_0 \\mathbf{J} + \\mu_0 \\varepsilon_0 \\frac{\\partial \\mathbf{E}}{\\partial t}
-\\]
-
-\\section{Cơ Học Lượng Tử & Tương Đối}
-
-Phương trình Schrödinger phụ thuộc thời gian mô tả hàm sóng $\\Psi(\\mathbf{r}, t)$:
-\\[
-i\\hbar \\frac{\\partial}{\\partial t}\\Psi(\\mathbf{r}, t) = \\left[ -\\frac{\\hbar^2}{2m}\\nabla^2 + V(\\mathbf{r}, t) \\right] \\Psi(\\mathbf{r}, t)
-\\]
-
-Hệ thức tương đối hẹp Einstein:
-\\[
-E^2 = (pc)^2 + (m_0 c^2)^2
-\\]
-
-Định luật phóng xạ hạt nhân:
-\\[
-N(t) = N_0 \\cdot 2^{-\\frac{t}{T}} = N_0 \\cdot e^{-\\lambda t}
-\\]
-
-\\end{document}`,
-  },
-  {
-    id: 'simple-formulas',
-    name: 'Công thức Toán đơn giản',
-    description: 'Mẫu nhanh gồm các công thức căn bản: phương trình bậc hai, lượng giác, giới hạn và tổ hợp',
-    category: 'simple',
-    latex: `% Mẫu thử nghiệm công thức đơn giản
-\\textbf{1. Công thức nghiệm phương trình bậc hai:}
-\\[
-x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
-\\]
-
-\\textbf{2. Đẳng thức lượng giác cơ bản:}
-\\[
-\\sin^2(x) + \\cos^2(x) = 1, \\quad 1 + \\tan^2(x) = \\frac{1}{\\cos^2(x)}
-\\]
-
-\\textbf{3. Công thức tổ hợp và nhị thức Newton:}
-\\[
-(a + b)^n = \\sum_{k=0}^{n} \\binom{n}{k} a^{n-k} b^k, \\quad \\text{với } \\binom{n}{k} = \\frac{n!}{k!(n-k)!}
-\\]
-
-\\textbf{4. Giới hạn quan trọng:}
-\\[
-\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1, \\quad \\lim_{n \\to \\infty} \\left(1 + \\frac{1}{n}\\right)^n = e
-\\]`,
   },
 ];
