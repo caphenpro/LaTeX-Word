@@ -14,7 +14,6 @@ export function latexToMathml(latex: string, displayMode = false): { mathml: str
       trust: true,
     });
 
-    // Extract <math>...</math> tag
     const mathMatch = rawHtml.match(/<math[\s\S]*?<\/math>/i);
     if (!mathMatch) {
       return {
@@ -22,7 +21,6 @@ export function latexToMathml(latex: string, displayMode = false): { mathml: str
       };
     }
 
-    // Strip unnecessary KaTeX annotations that can confuse OMML converter
     const cleaned = mathMatch[0].replace(/<annotation[\s\S]*?<\/annotation>/gi, '');
     return { mathml: cleaned };
   } catch (err: unknown) {
@@ -46,7 +44,6 @@ export function mathmlToOmml(mathml: string): { omml: string; error?: string } {
     return { omml: ommlString };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    // Fallback minimal OMML with plain text representation
     const fallbackText = mathml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const fallbackOmml = `<m:oMath xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"><m:r><m:t xml:space="preserve">${escapeXml(fallbackText)}</m:t></m:r></m:oMath>`;
     return { omml: fallbackOmml, error: errorMsg };
@@ -72,10 +69,12 @@ export function latexToOmml(latex: string, displayMode = false): {
 }
 
 /**
- * Helper to escape XML special entities
+ * Helper to escape XML special entities and strip illegal XML control characters
  */
 export function escapeXml(str: string): string {
+  if (!str) return '';
   return str
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -101,7 +100,6 @@ export async function copyToClipboard(content: string, type: 'omml' | 'mathml' |
           ]);
           return true;
         } catch {
-          // fallback to standard writeText
           await navigator.clipboard.writeText(content);
           return true;
         }
@@ -110,7 +108,6 @@ export async function copyToClipboard(content: string, type: 'omml' | 'mathml' |
         return true;
       }
     } else {
-      // Fallback for older environments
       const textarea = document.createElement('textarea');
       textarea.value = content;
       textarea.style.position = 'fixed';

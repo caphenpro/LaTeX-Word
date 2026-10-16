@@ -293,6 +293,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ blocks, settin
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950/40 relative flex justify-center">
         {activeTab === 'preview' ? (
           <div
+            id="document-preview-page"
             className={`w-full max-w-[820px] bg-white text-slate-900 rounded-lg doc-page-simulation min-h-[1050px] transition-all my-2 ${marginPadding}`}
             style={fontStyle}
           >

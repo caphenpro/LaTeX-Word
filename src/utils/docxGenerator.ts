@@ -18,12 +18,13 @@ import { svgToPngData } from './tikzUtils';
 /**
  * Builds the complete [Content_Types].xml file
  */
-function buildContentTypesXml(hasImages: boolean): string {
+function buildContentTypesXml(): string {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
-  ${hasImages ? '<Default Extension="png" ContentType="image/png"/>' : ''}
+  <Default Extension="png" ContentType="image/png"/>
+  <Default Extension="jpeg" ContentType="image/jpeg"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
   <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
   <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
@@ -42,7 +43,7 @@ function buildRootRelsXml(): string {
 }
 
 /**
- * Builds word/_rels/document.xml.rels with image relationships
+ * Builds word/_rels/document.xml.rels with only valid existing image relationships
  */
 function buildDocumentRelsXml(imageCount: number): string {
   let rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -231,9 +232,7 @@ function renderSegmentXml(seg: TextSegment): string {
  * Renders an embedded geometry drawing (PNG image) in Word OpenXML
  */
 function renderGeometryDrawingXml(imageIdx: number, widthPx: number, heightPx: number, caption?: string): string {
-  // Convert pixels to EMUs (9525 EMUs per px at 96 DPI)
-  // Clamp width to fit within page margins (approx 10-14cm = 3,600,000 to 5,000,000 EMUs)
-  const maxCx = 4500000;
+  const maxCx = 4500000; // ~12cm
   let cx = Math.round(widthPx * 9525);
   let cy = Math.round(heightPx * 9525);
 
@@ -253,7 +252,7 @@ function renderGeometryDrawingXml(imageIdx: number, widthPx: number, heightPx: n
         <wp:inline distT="0" distB="0" distL="0" distR="0">
           <wp:extent cx="${cx}" cy="${cy}"/>
           <wp:effectExtent l="0" t="0" r="0" b="0"/>
-          <wp:docPr id="${imageIdx}" name="HinhHoc_${imageIdx}"/>
+          <wp:docPr id="${imageIdx}" name="Picture ${imageIdx}"/>
           <wp:cNvGraphicFramePr>
             <a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/>
           </wp:cNvGraphicFramePr>
@@ -261,19 +260,23 @@ function renderGeometryDrawingXml(imageIdx: number, widthPx: number, heightPx: n
             <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
               <pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
                 <pic:nvPicPr>
-                  <pic:cNvPr id="${imageIdx}" name="HinhHoc_${imageIdx}.png"/>
+                  <pic:cNvPr id="${imageIdx}" name="Picture ${imageIdx}"/>
                   <pic:cNvPicPr/>
                 </pic:nvPicPr>
                 <pic:blipFill>
                   <a:blip r:embed="rIdImg${imageIdx}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>
-                  <a:stretch><a:fillRect/></a:stretch>
+                  <a:stretch>
+                    <a:fillRect/>
+                  </a:stretch>
                 </pic:blipFill>
                 <pic:spPr>
                   <a:xfrm>
                     <a:off x="0" y="0"/>
                     <a:ext cx="${cx}" cy="${cy}"/>
                   </a:xfrm>
-                  <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+                  <a:prstGeom prst="rect">
+                    <a:avLst/>
+                  </a:prstGeom>
                 </pic:spPr>
               </pic:pic>
             </a:graphicData>
@@ -361,7 +364,7 @@ function renderTableXml(block: TableBlock): string {
 }
 
 /**
- * Generates the full word/document.xml string
+ * Generates the full word/document.xml string with pure OMML and valid relationships
  */
 function buildDocumentXml(
   blocks: ParsedBlock[],
@@ -503,14 +506,13 @@ function buildDocumentXml(
         const eqBlk = block as EquationBlock;
         const alignJc = settings.centerEquations ? 'center' : 'left';
 
+        // Direct OMML in paragraph guarantees 100% validity across all Word versions
         bodyXml += `<w:p>
           <w:pPr>
             <w:jc w:val="${alignJc}"/>
             <w:spacing w:before="160" w:after="160"/>
           </w:pPr>
-          <m:oMathPara>
-            ${eqBlk.omml}
-          </m:oMathPara>`;
+          ${eqBlk.omml}`;
 
         if (eqBlk.equationNumber) {
           bodyXml += `<w:r>
@@ -531,6 +533,17 @@ function buildDocumentXml(
         const info = geometryMap.get(gBlk.id);
         if (info) {
           bodyXml += renderGeometryDrawingXml(info.imageIdx, info.width, info.height, gBlk.caption);
+        } else if (gBlk.caption) {
+          bodyXml += `<w:p>
+            <w:pPr>
+              <w:jc w:val="center"/>
+              <w:spacing w:before="100" w:after="100"/>
+            </w:pPr>
+            <w:r>
+              <w:rPr><w:i/><w:color w:val="475569"/></w:rPr>
+              <w:t xml:space="preserve">[Hình học: ${escapeXml(gBlk.caption)}]</w:t>
+            </w:r>
+          </w:p>`;
         }
         break;
       }
@@ -627,7 +640,7 @@ function buildDocumentXml(
 }
 
 /**
- * Builds and packages complete Word (.docx) file as a Blob with native OMML and embedded geometry diagrams
+ * Builds and packages complete Word (.docx) file as a Blob with native OMML and safe image embedding
  */
 export async function generateDocxBlob(
   blocks: ParsedBlock[],
@@ -635,7 +648,6 @@ export async function generateDocxBlob(
 ): Promise<Blob> {
   const zip = new JSZip();
 
-  // 1. Process all GeometryBlocks into high-res PNG images for Word
   const geometryBlocks = blocks.filter(b => b.type === 'geometry') as GeometryBlock[];
   const geometryMap = new Map<string, { imageIdx: number; width: number; height: number }>();
 
@@ -645,24 +657,28 @@ export async function generateDocxBlob(
   let imgCounter = 0;
   for (const gBlock of geometryBlocks) {
     if (gBlock.svg) {
-      imgCounter++;
       const w = gBlock.width || 450;
       const h = gBlock.height || 350;
-      const pngData = await svgToPngData(gBlock.svg, w, h);
-      if (pngData.length > 0 && mediaFolder) {
-        mediaFolder.file(`image${imgCounter}.png`, pngData);
-        geometryMap.set(gBlock.id, { imageIdx: imgCounter, width: w, height: h });
+      try {
+        const pngData = await svgToPngData(gBlock.svg, w, h);
+        if (pngData && pngData.length > 0 && mediaFolder) {
+          imgCounter++;
+          mediaFolder.file(`image${imgCounter}.png`, pngData);
+          geometryMap.set(gBlock.id, { imageIdx: imgCounter, width: w, height: h });
+        }
+      } catch (err) {
+        console.warn('Không thể chuyển ảnh TikZ sang PNG, bỏ qua nhúng', err);
       }
     }
   }
 
-  // 2. [Content_Types].xml
-  zip.file('[Content_Types].xml', buildContentTypesXml(imgCounter > 0));
+  // 1. [Content_Types].xml (always valid)
+  zip.file('[Content_Types].xml', buildContentTypesXml());
 
-  // 3. _rels/.rels
+  // 2. _rels/.rels
   zip.folder('_rels')?.file('.rels', buildRootRelsXml());
 
-  // 4. word files
+  // 3. word files with EXACT count of written images
   if (wordFolder) {
     wordFolder.folder('_rels')?.file('document.xml.rels', buildDocumentRelsXml(imgCounter));
     wordFolder.file('fontTable.xml', buildFontTableXml(settings.fontFamily));
@@ -683,7 +699,7 @@ export async function generateDocxBlob(
 }
 
 /**
- * Generates Word HTML (.doc) format with MathML / HTML equations & SVG geometry drawings
+ * Generates Word HTML (.doc) format with MathML & SVG geometry drawings
  */
 export function generateWordHtml(blocks: ParsedBlock[], settings: DocSettings): string {
   let contentHtml = '';

@@ -3,13 +3,14 @@ import { DocSettings, ParsedBlock, ConversionStats } from './types';
 import { TEMPLATES, TemplateItem } from './data/templates';
 import { parseLatexDocument } from './utils/latexParser';
 import { generateDocxBlob, generateWordHtml } from './utils/docxGenerator';
+import { exportElementToPdf, printVectorDocument } from './utils/pdfGenerator';
 import { Navbar } from './components/Navbar';
 import { LatexEditor } from './components/LatexEditor';
 import { DocumentPreview } from './components/DocumentPreview';
 import { SettingsModal } from './components/SettingsModal';
 import { WordGuideModal } from './components/WordGuideModal';
 import { FormulaHelperModal } from './components/FormulaHelperModal';
-import { FileEdit, Eye, AlertCircle, Compass } from 'lucide-react';
+import { FileEdit, Eye, AlertCircle, Compass, CheckCircle2 } from 'lucide-react';
 
 const DEFAULT_SETTINGS: DocSettings = {
   docTitle: 'Chuyen_De_Hinh_Hoc_Khong_Gian',
@@ -28,8 +29,10 @@ const DEFAULT_SETTINGS: DocSettings = {
 export default function App() {
   const [latex, setLatex] = useState<string>(TEMPLATES[0].latex);
   const [settings, setSettings] = useState<DocSettings>(DEFAULT_SETTINGS);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
+  const [statusNotification, setStatusNotification] = useState<string | null>(null);
 
   // Modals
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -46,6 +49,11 @@ export default function App() {
   }>(() => {
     return parseLatexDocument(latex, settings);
   }, [latex, settings]);
+
+  const showStatus = (msg: string) => {
+    setStatusNotification(msg);
+    setTimeout(() => setStatusNotification(null), 3000);
+  };
 
   // Handle template selection
   const handleSelectTemplate = (tpl: TemplateItem) => {
@@ -73,10 +81,10 @@ export default function App() {
     return `${clean || 'Hinh_Hoc_Va_Toan'}.${ext}`;
   };
 
-  // Primary Action: Download Native Word .docx with OMML & embedded geometry drawings
+  // Primary Action 1: Download Native Word .docx with OMML & embedded geometry drawings
   const handleDownloadDocx = async () => {
     try {
-      setIsDownloading(true);
+      setIsDownloadingDocx(true);
       const effectiveSettings: DocSettings = {
         ...settings,
         docTitle: docTitle || settings.docTitle,
@@ -93,11 +101,49 @@ export default function App() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      showStatus('Đã tải thành công file Word (.docx) chuẩn OMML!');
     } catch (err) {
       console.error('Lỗi khi tạo file docx', err);
       alert('Không thể tạo file docx: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
-      setIsDownloading(false);
+      setIsDownloadingDocx(false);
+    }
+  };
+
+  // Primary Action 2: Export directly to downloadable PDF file
+  const handleDownloadPdf = async () => {
+    try {
+      setIsExportingPdf(true);
+      // Switch to preview tab on mobile to ensure element is rendered
+      if (mobileTab !== 'preview') {
+        setMobileTab('preview');
+        // brief pause to allow DOM render
+        await new Promise(r => setTimeout(r, 100));
+      }
+
+      const previewElement = document.getElementById('document-preview-page');
+      if (!previewElement) {
+        throw new Error('Chưa tìm thấy trang xem trước tài liệu.');
+      }
+
+      await exportElementToPdf(previewElement, getCleanFilename('pdf'));
+      showStatus('Đã xuất thành công file PDF (.pdf) chuẩn A4!');
+    } catch (err) {
+      console.error('Lỗi khi xuất PDF', err);
+      // Fallback to print if canvas capture encounters any issue
+      printVectorDocument();
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  // Vector Print-to-PDF via native browser print dialog
+  const handlePrintPdf = () => {
+    if (mobileTab !== 'preview') {
+      setMobileTab('preview');
+      setTimeout(() => printVectorDocument(), 200);
+    } else {
+      printVectorDocument();
     }
   };
 
@@ -122,6 +168,7 @@ export default function App() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      showStatus('Đã tải file Word HTML (.doc)!');
     } catch (err) {
       console.error('Lỗi khi tải file doc', err);
       alert('Không thể tạo file doc');
@@ -135,9 +182,12 @@ export default function App() {
         onSelectTemplate={handleSelectTemplate}
         onDownloadDocx={handleDownloadDocx}
         onDownloadHtmlDoc={handleDownloadHtmlDoc}
+        onDownloadPdf={handleDownloadPdf}
+        onPrintPdf={handlePrintPdf}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenGuide={() => setIsGuideOpen(true)}
-        isDownloading={isDownloading}
+        isDownloadingDocx={isDownloadingDocx}
+        isExportingPdf={isExportingPdf}
         equationCount={stats.equationCount}
         geometryCount={stats.geometryCount}
       />
@@ -145,7 +195,7 @@ export default function App() {
       {/* Main Workspace */}
       <main className="flex-1 flex flex-col p-3 sm:p-4 lg:p-5 max-w-[1720px] w-full mx-auto overflow-hidden">
         {/* Mobile Tab Switcher */}
-        <div className="flex lg:hidden mb-3 p-1 bg-slate-900 rounded-xl border border-slate-800">
+        <div className="flex lg:hidden mb-3 p-1 bg-slate-900 rounded-xl border border-slate-800 mobile-tab-bar">
           <button
             onClick={() => setMobileTab('editor')}
             className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
@@ -175,23 +225,31 @@ export default function App() {
 
         {/* Geometry & TikZ Info Banner when diagrams exist */}
         {stats.geometryCount > 0 && (
-          <div className="mb-3 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center justify-between">
+          <div className="mb-3 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center justify-between no-print">
             <div className="flex items-center gap-2">
               <Compass className="w-4 h-4 shrink-0 text-emerald-400" />
               <span>
-                Đã phát hiện <strong>{stats.geometryCount}</strong> hình vẽ TikZ hình học. Hình ảnh sẽ được tự động vẽ vector và nhúng trực tiếp vào file Word (.docx) khi tải về!
+                Đã phát hiện <strong>{stats.geometryCount}</strong> hình vẽ TikZ hình học. Hình ảnh sẽ tự động nhúng vào cả file <strong>Word (.docx)</strong> và <strong>PDF</strong>!
               </span>
             </div>
           </div>
         )}
 
+        {/* Notification Toast */}
+        {statusNotification && (
+          <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-emerald-500/40 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-medium animate-in slide-in-from-bottom duration-200">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{statusNotification}</span>
+          </div>
+        )}
+
         {/* Errors / Warnings Bar if any */}
         {stats.errorCount > 0 && (
-          <div className="mb-3 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between">
+          <div className="mb-3 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between no-print">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
               <span>
-                Phát hiện <strong>{stats.errorCount}</strong> cảnh báo cú pháp công thức hoặc hình vẽ. Ứng dụng đã xử lý an toàn và bảo toàn nội dung khi xuất file Word.
+                Phát hiện <strong>{stats.errorCount}</strong> cảnh báo cú pháp công thức hoặc hình vẽ. Ứng dụng đã xử lý an toàn và bảo toàn nội dung khi xuất file.
               </span>
             </div>
           </div>
@@ -201,7 +259,7 @@ export default function App() {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 min-h-[600px] h-[calc(100vh-120px)]">
           {/* Left Pane: LaTeX & Geometry Editor */}
           <div
-            className={`h-full flex flex-col ${
+            className={`editor-container h-full flex flex-col ${
               mobileTab === 'editor' ? 'flex' : 'hidden lg:flex'
             }`}
           >
@@ -216,7 +274,7 @@ export default function App() {
 
           {/* Right Pane: Live Document Preview */}
           <div
-            className={`h-full flex flex-col ${
+            className={`preview-container h-full flex flex-col ${
               mobileTab === 'preview' ? 'flex' : 'hidden lg:flex'
             }`}
           >

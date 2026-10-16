@@ -36,3 +36,68 @@
   font-size: 1.05em;
   text-rendering: auto;
 }
+
+/* Print to PDF vector optimization styles */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 15mm 15mm;
+  }
+
+  body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 12pt;
+  }
+
+  header,
+  nav,
+  aside,
+  button,
+  .no-print,
+  .mobile-tab-bar {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Hide editor in print */
+  .editor-container {
+    display: none !important;
+  }
+
+  /* Show only preview */
+  .preview-container {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  #document-preview-page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    color: #000000 !important;
+  }
+
+  /* Prevent awkward page breaks */
+  h1, h2, h3, h4 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  table, figure, .katex-display, .geometry-container {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
